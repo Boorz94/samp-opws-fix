@@ -17,7 +17,6 @@
 #endif
 
 static
-	__opws_fix_PlayerFixCount[MAX_PLAYERS char],
 	__opws_fix_PlayerMarkers = PLAYER_MARKERS_MODE_GLOBAL,
 	__opws_fix_Weather = 10,
 	__opws_fix_WorldTime = 12,
@@ -33,18 +32,8 @@ static
 
 public OnPlayerConnect(playerid)
 {
-	#if defined opws_fix_OnPlayerConnect
-		opws_fix_OnPlayerConnect(playerid);
-	#endif
-
-	
-	__opws_fix_PlayerFixCount{playerid} = (!GetConsoleVarAsInt("lagcompmode") ? 2 : 0);
-	
-	
-	if (__opws_fix_PlayerFixCount{playerid} > 0)
+	if (!GetConsoleVarAsInt("lagcompmode"))
 	{
-		__opws_fix_PlayerFixCount{playerid} -= 1;
-
 		new BitStream:bs = BS_New(), hostname[50];
 
 		GetConsoleVarAsString("hostname", hostname, sizeof(hostname));
@@ -74,7 +63,46 @@ public OnPlayerConnect(playerid)
 			PR_INT32,   GetConsoleVarAsInt("incar_rate"),
 			PR_INT32,   GetConsoleVarAsInt("weapon_rate"),
 			PR_INT32,   10,
-			PR_UINT8,   __opws_fix_PlayerFixCount{playerid},
+			PR_UINT8,   1,
+
+			PR_UINT8,   0,
+			PR_UINT8,   0,
+			PR_UINT8,   0,
+			
+			PR_UINT8,   strlen(hostname),
+			PR_STRING,  hostname,
+			PR_UINT8,   strlen(hostname)
+		);
+
+		__PAWNRAKNET_SEND(bs, playerid, 139, PR_HIGH_PRIORITY, PR_RELIABLE_ORDERED);
+		BS_Reset(bs);
+
+		BS_WriteValue(bs,
+			PR_CBOOL,   false,
+			PR_CBOOL,   __opws_fix_UsePlayerPedAnims,
+			PR_CBOOL,   true,
+			PR_CBOOL,   __opws_fix_LimitChatRadius,
+			PR_FLOAT,   __opws_fix_ChatRadius,
+			PR_CBOOL,   __opws_fix_StuntBonus,
+			PR_FLOAT,   __opws_fix_NameTagDistance,
+			PR_CBOOL,   __opws_fix_DisableEnterExits,
+			PR_CBOOL,   true,
+			PR_CBOOL,   __opws_fix_ManualVehicles,
+			PR_INT32,   0,
+			PR_UINT16,  playerid,
+			PR_CBOOL,   __opws_fix_ShowNameTags,
+			PR_INT32,   __opws_fix_PlayerMarkers,
+			PR_UINT8,   __opws_fix_WorldTime,
+			PR_UINT8,   __opws_fix_Weather,
+			PR_FLOAT,   __opws_fix_Gravity,
+			PR_CBOOL,   !!GetConsoleVarAsInt("lanmode"),
+			PR_INT32,   0,
+			PR_CBOOL,   false,
+			PR_INT32,   GetConsoleVarAsInt("onfoot_rate"),
+			PR_INT32,   GetConsoleVarAsInt("incar_rate"),
+			PR_INT32,   GetConsoleVarAsInt("weapon_rate"),
+			PR_INT32,   10,
+			PR_UINT8,   0,
 
 			PR_UINT8,   0,
 			PR_UINT8,   0,
@@ -87,14 +115,13 @@ public OnPlayerConnect(playerid)
 
 		__PAWNRAKNET_SEND(bs, playerid, 139, PR_HIGH_PRIORITY, PR_RELIABLE_ORDERED);
 		BS_Delete(bs);
+	}
 
-		return 1;
-	}	
-
+	#if defined opws_fix_OnPlayerConnect
+		opws_fix_OnPlayerConnect(playerid);
+	#endif
 	return 1;
 }
-
-
 
 stock opws_fix_SetWeather(weatherid)
 {
